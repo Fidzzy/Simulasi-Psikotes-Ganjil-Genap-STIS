@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Kuis Cepat - Versi Formulir</title>
+</head>
+<body>
+
+    <div id="app-container">
+
+        <!-- Tampilan Awal / Tombol Mulai -->
+        <div id="start-screen">
+            <h1>Simulasi Psikotes STIS</h1>
+            <p>Subtes Ganjil Genap</p>
+            <p><b>Aturan: 
+            <p><b>1. Jawab 1 jika hasil penjumlahan Ganjil, dan 0 jika hasilnya Genap.</b></p>
+            <p><b>2. Terdiri dari 20 ronde, setiap ronde terdapat 100 soal (berdasarkan tes taun lalu).</b></p>
+            <p><b>3. Setiap ronde waktunya 1 menit.</b></p>
+            <p><b>4. Ketika waktu tiap ronde habis jawaban otomatis tersubmit.</b></p>
+            <p>Gunakan tombol 'Enter' untuk pindah ke soal berikutnya.</p>
+            <button id="start-button">Mulai</button>
+        </div>
+
+        <!-- Tampilan Permainan -->
+        <div id="game-screen" style="display: none;">
+            <!-- Header Info Ronde dan Waktu -->
+            <div>
+                <p>Ronde: <span id="round-number">1</span> / 20</p>
+                <p>Sisa Waktu: <span id="timer-display">60</span></p>
+            </div>
+            <hr>
+
+            <!-- Form Soal untuk Ronde Ini -->
+            <form id="round-form">
+                <div id="questions-container" style="border: 1px solid #ccc; padding: 10px;">
+                    <!-- Soal akan dimuat di sini oleh JavaScript -->
+                </div>
+                <br>
+                <button type="submit" id="submit-round-button">Submit</button>
+            </form>
+        </div>
+
+        <!-- Tampilan Skor Akhir -->
+        <div id="score-screen" style="display: none;">
+            <h2>SELESAI</h2>
+            <p>Kerja bagus! Kamu telah menyelesaikan semua ronde.</p>
+            <div>
+                <p>Skormu</p>
+                <h1 id="final-score">0</h1>
+            </div>
+            <button id="restart-button">Coba Lagi???(makin sering nyoba makin pande)</button>
+        </div>
+
+    </div>
+
+    <script>
+        const TOTAL_ROUNDS = 20;
+        const ROUND_DURATION_S = 60;
+        const QUESTIONS_PER_ROUND = 100;
+
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const scoreScreen = document.getElementById('score-screen');
+        const roundForm = document.getElementById('round-form');
+        const questionsContainer = document.getElementById('questions-container');
+        
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+
+        const roundNumberDisplay = document.getElementById('round-number');
+        const timerDisplay = document.getElementById('timer-display');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let currentRound = 0;
+        let score = 0;
+        let timeLeft = ROUND_DURATION_S;
+        let timerInterval = null;
+        let currentRoundAnswers = [];
+        let isRoundActive = false;
+
+        function startGame() {
+            currentRound = 0;
+            score = 0;
+            startScreen.style.display = 'none';
+            scoreScreen.style.display = 'none';
+            gameScreen.style.display = 'block';
+            startNextRound();
+        }
+
+        function startNextRound() {
+            currentRound++;
+            if (currentRound > TOTAL_ROUNDS) {
+                endGame();
+                return;
+            }
+
+            isRoundActive = true;
+            currentRoundAnswers = [];
+            questionsContainer.innerHTML = ''; 
+            roundNumberDisplay.textContent = currentRound;
+            
+            for (let i = 0; i < QUESTIONS_PER_ROUND; i++) {
+                const num1 = Math.floor(Math.random() * 10);
+                const num2 = Math.floor(Math.random() * 10);
+                
+                const sum = num1 + num2;
+                const correctAnswer = sum % 2; 
+                currentRoundAnswers.push(correctAnswer);
+
+                const questionDiv = document.createElement('div');
+                questionDiv.style.marginBottom = '5px';
+                questionDiv.innerHTML = `<label style="display: inline-block; width: 120px;">${i + 1}. ${num1} + ${num2} = </label><input type="number" name="answer-${i}">`;
+                questionsContainer.appendChild(questionDiv);
+            }
+            
+            questionsContainer.scrollTop = 0; 
+            if (questionsContainer.querySelector('input')) {
+                questionsContainer.querySelector('input').focus();
+            }
+            startTimer();
+        }
+        
+        function startTimer() {
+            timeLeft = ROUND_DURATION_S;
+            timerDisplay.textContent = timeLeft;
+            
+            clearInterval(timerInterval); 
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = timeLeft;
+                if (timeLeft <= 0) {
+                    submitRound();
+                }
+            }, 1000);
+        }
+
+        function submitRound() {
+            if (!isRoundActive) return; 
+            isRoundActive = false; 
+
+            clearInterval(timerInterval);
+
+            const answerInputs = document.querySelectorAll('#questions-container input');
+            
+            answerInputs.forEach((input, index) => {
+                const userAnswer = parseInt(input.value, 10); 
+                if (userAnswer === currentRoundAnswers[index]) {
+                    score++;
+                }
+            });
+
+            startNextRound(); 
+        }
+
+        function endGame() {
+            gameScreen.style.display = 'none';
+            scoreScreen.style.display = 'block';
+            finalScoreDisplay.textContent = score;
+        }
+
+        startButton.addEventListener('click', startGame);
+        
+        restartButton.addEventListener('click', () => {
+             scoreScreen.style.display = 'none';
+             startScreen.style.display = 'block';
+        });
+
+        roundForm.addEventListener('submit', (event) => {
+            event.preventDefault(); 
+            submitRound();
+        });
+        
+        questionsContainer.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+
+                const inputs = Array.from(document.querySelectorAll('#questions-container input'));
+                const currentIndex = inputs.indexOf(event.target);
+                const nextIndex = currentIndex + 1;
+
+                if (nextIndex < inputs.length) {
+                    inputs[nextIndex].focus();
+                } else {
+                    document.getElementById('submit-round-button').focus();
+                }
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            startScreen.style.display = 'block';
+            gameScreen.style.display = 'none';
+            scoreScreen.style.display = 'none';
+        });
+
+    </script>
+</body>
+</html>
+
