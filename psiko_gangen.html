@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulasi Kuis Cepat</title>
+    <title>Simulasi Ganjil Genap</title>
 </head>
 <body>
 
@@ -46,9 +46,25 @@
             <h2>SELESAI</h2>
             <p>Kerja bagus! Kamu telah menyelesaikan semua ronde.</p>
             <div>
-                <p>Skormu</p>
+                <p>Skor Total Akhir</p>
                 <h1 id="final-score">0</h1>
             </div>
+            <hr>
+            <h3>Rincian Per Ronde</h3>
+            <table border="1" style="width:100%; border-collapse: collapse; text-align: center;">
+              <thead>
+                <tr>
+                  <th style="padding: 5px;">Ronde</th>
+                  <th style="padding: 5px;">Dikerjakan</th>
+                  <th style="padding: 5px;">Benar</th>
+                  <th style="padding: 5px;">Salah</th>
+                </tr>
+              </thead>
+              <tbody id="stats-table-body">
+                <!-- Rincian akan dimuat di sini oleh JavaScript -->
+              </tbody>
+            </table>
+            <br>
             <button id="restart-button">Coba Lagi???(makin sering nyoba makin pande)</button>
         </div>
 
@@ -71,6 +87,7 @@
         const roundNumberDisplay = document.getElementById('round-number');
         const timerDisplay = document.getElementById('timer-display');
         const finalScoreDisplay = document.getElementById('final-score');
+        const statsTableBody = document.getElementById('stats-table-body');
 
         let currentRound = 0;
         let score = 0;
@@ -78,10 +95,12 @@
         let timerInterval = null;
         let currentRoundAnswers = [];
         let isRoundActive = false;
+        let roundStats = [];
 
         function startGame() {
             currentRound = 0;
             score = 0;
+            roundStats = [];
             startScreen.style.display = 'none';
             scoreScreen.style.display = 'none';
             gameScreen.style.display = 'block';
@@ -144,11 +163,28 @@
 
             const answerInputs = document.querySelectorAll('#questions-container input');
             
+            let answeredCount = 0;
+            let correctCountInRound = 0;
+
             answerInputs.forEach((input, index) => {
                 const userAnswer = parseInt(input.value, 10); 
+                
+                if (input.value !== '' && !isNaN(userAnswer)) {
+                    answeredCount++;
+                }
+
                 if (userAnswer === currentRoundAnswers[index]) {
                     score++;
+                    correctCountInRound++;
                 }
+            });
+
+            const incorrectCount = answeredCount - correctCountInRound;
+            roundStats.push({
+                round: currentRound,
+                answered: answeredCount,
+                correct: correctCountInRound,
+                incorrect: incorrectCount
             });
 
             startNextRound(); 
@@ -158,6 +194,19 @@
             gameScreen.style.display = 'none';
             scoreScreen.style.display = 'block';
             finalScoreDisplay.textContent = score;
+
+            statsTableBody.innerHTML = ''; 
+
+            roundStats.forEach(stat => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td style="padding: 5px;">${stat.round}</td>
+                    <td style="padding: 5px;">${stat.answered}</td>
+                    <td style="padding: 5px;">${stat.correct}</td>
+                    <td style="padding: 5px;">${stat.incorrect}</td>
+                `;
+                statsTableBody.appendChild(row);
+            });
         }
 
         startButton.addEventListener('click', startGame);
@@ -197,5 +246,4 @@
     </script>
 </body>
 </html>
-
 
