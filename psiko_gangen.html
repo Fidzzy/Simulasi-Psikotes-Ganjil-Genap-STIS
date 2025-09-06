@@ -18,7 +18,6 @@
             <p><b>2. Terdiri dari 20 ronde, setiap ronde terdapat 100 soal (berdasarkan tes taun lalu).</b></p>
             <p><b>3. Setiap ronde waktunya 1 menit.</b></p>
             <p><b>4. Ketika waktu tiap ronde habis jawaban otomatis tersubmit.</b></p>
-            <p>Gunakan tombol 'Enter' untuk pindah ke soal berikutnya.</p>
             <button id="start-button">Mulai</button>
         </div>
 
@@ -128,15 +127,19 @@
                 currentRoundAnswers.push(correctAnswer);
 
                 const questionDiv = document.createElement('div');
-                questionDiv.style.marginBottom = '5px';
-                questionDiv.innerHTML = `<label style="display: inline-block; width: 120px;">${i + 1}. ${num1} + ${num2} = </label><input type="number" name="answer-${i}">`;
+                questionDiv.style.marginBottom = '10px';
+                
+                questionDiv.innerHTML = `
+                    <label style="display: block;">${i + 1}. ${num1} + ${num2} = </label>
+                    <div style="padding-left: 15px; margin-top: 5px;">
+                        <input type="radio" name="answer-${i}" value="0" id="q${i}-opt0"> <label for="q${i}-opt0" style="margin-right: 15px;">0</label>
+                        <input type="radio" name="answer-${i}" value="1" id="q${i}-opt1"> <label for="q${i}-opt1">1</label>
+                    </div>
+                `;
                 questionsContainer.appendChild(questionDiv);
             }
             
             questionsContainer.scrollTop = 0; 
-            if (questionsContainer.querySelector('input')) {
-                questionsContainer.querySelector('input').focus();
-            }
             startTimer();
         }
         
@@ -160,24 +163,21 @@
             isRoundActive = false; 
 
             clearInterval(timerInterval);
-
-            const answerInputs = document.querySelectorAll('#questions-container input');
             
             let answeredCount = 0;
             let correctCountInRound = 0;
 
-            answerInputs.forEach((input, index) => {
-                const userAnswer = parseInt(input.value, 10); 
-                
-                if (input.value !== '' && !isNaN(userAnswer)) {
+            for (let i = 0; i < QUESTIONS_PER_ROUND; i++) {
+                const checkedRadio = document.querySelector(`input[name="answer-${i}"]:checked`);
+                if (checkedRadio) {
                     answeredCount++;
+                    const userAnswer = parseInt(checkedRadio.value, 10);
+                    if (userAnswer === currentRoundAnswers[i]) {
+                        score++;
+                        correctCountInRound++;
+                    }
                 }
-
-                if (userAnswer === currentRoundAnswers[index]) {
-                    score++;
-                    correctCountInRound++;
-                }
-            });
+            }
 
             const incorrectCount = answeredCount - correctCountInRound;
             roundStats.push({
@@ -221,22 +221,6 @@
             submitRound();
         });
         
-        questionsContainer.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-
-                const inputs = Array.from(document.querySelectorAll('#questions-container input'));
-                const currentIndex = inputs.indexOf(event.target);
-                const nextIndex = currentIndex + 1;
-
-                if (nextIndex < inputs.length) {
-                    inputs[nextIndex].focus();
-                } else {
-                    document.getElementById('submit-round-button').focus();
-                }
-            }
-        });
-
         document.addEventListener('DOMContentLoaded', () => {
             startScreen.style.display = 'block';
             gameScreen.style.display = 'none';
